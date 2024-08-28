@@ -63,19 +63,25 @@ Rectangle {
 
             WizardAskPassword {
                 id: passwordFields
+                pwInputKeyNavigationBackTab: passwordFields.verify() ? wizardNav.btnNext : wizardNav.wizardProgress
+                pwInputConfirmKeyNavigationTab: wizardNav.btnPrev
             }
 
             WizardNav {
+                id: wizardNav
                 progressSteps: appWindow.walletMode <= 1 ? 3 : 4
                 progress: 1
-                btnNext.enabled: passwordFields.calcStrengthAndVerify();
+                btnNext.enabled: passwordFields.verify();
+                btnPrevKeyNavigationBackTab: passwordFields.passwordInputConfirm
+                btnNextKeyNavigationTab: passwordFields.passwordInput
+
                 onPrevClicked: {
                     wizardStateView.state = "wizardRestoreWallet1";
                 }
                 onNextClicked: {
                     wizardController.walletOptionsPassword = passwordFields.password;
 
-                    if(appWindow.walletMode === 0 || appWindow.walletMode === 1){
+                    if (appWindow.walletMode === 0 || appWindow.walletMode === 1) {
                         wizardStateView.state = "wizardRestoreWallet4";
                     } else {
                         wizardStateView.state = "wizardRestoreWallet3";

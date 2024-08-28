@@ -59,14 +59,20 @@ Rectangle {
 
             WizardAskPassword {
                 id: passwordFields
+                pwInputKeyNavigationBackTab: passwordFields.verify() ? wizardNav.btnNext : wizardNav.wizardProgress
+                pwInputConfirmKeyNavigationTab: wizardNav.btnPrev
             }
 
             WizardNav {
+                id: wizardNav
                 progressSteps: appWindow.walletMode <= 1 ? 4 : 5
                 progress: 2
-                btnNext.enabled: passwordFields.calcStrengthAndVerify();
+                btnNext.enabled: passwordFields.verify();
+                btnPrevKeyNavigationBackTab: passwordFields.passwordInputConfirm
+                btnNextKeyNavigationTab: passwordFields.passwordInput
+
                 onPrevClicked: {
-                    if(wizardController.walletOptionsIsRecoveringFromDevice){
+                    if (wizardController.walletOptionsIsRecoveringFromDevice) {
                         wizardStateView.state = "wizardCreateDevice1";
                     } else {
                         wizardStateView.state = "wizardCreateWallet2";
