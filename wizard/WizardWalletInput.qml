@@ -53,17 +53,13 @@ GridLayout {
     columns: rowLayout ? 2 : 1
 
     function verify() {
-        if (walletName.text !== '' && walletLocation.text !== '') {
-            if (!walletName.error && !walletLocation.error) {
-                return true;
-            }
-        }
-        return false;
+        return (
+            walletName.text !== '' && walletLocation.text !== '' &&
+            walletName.verify() && walletLocation.verify()
+        );
     }
 
     function reset() {
-        walletName.error = !walletName.verify();
-        walletLocation.error = !walletLocation.verify();
         walletLocation.text = appWindow.accountsDir;
         walletName.text = Wizard.unusedWalletName(appWindow.accountsDir, defaultAccountName, walletManager);
     }
@@ -73,24 +69,25 @@ GridLayout {
             id: walletName
             Layout.preferredWidth: grid.width/5
 
-            function verify(){
+            function verifyWithMessage() {
                 if (walletName.text === "") {
-                    errorMessageWalletName.text = qsTr("Wallet name is empty") + translationManager.emptyString;
-                    return false;
+                    return qsTr("Wallet name is empty") + translationManager.emptyString;
                 }
                 if (/[\\\/]/.test(walletName.text)) {
-                    errorMessageWalletName.text = qsTr("Wallet name is invalid") + translationManager.emptyString;
-                    return false;
+                    return qsTr("Wallet name is invalid") + translationManager.emptyString;
                 }
-                if (walletLocation.text !== "") {
-                    var walletAlreadyExists = Wizard.walletPathExists(appWindow.accountsDir, walletLocation.text, walletName.text, isIOS, walletManager);
-                    if (walletAlreadyExists) {
-                        errorMessageWalletName.text = qsTr("Wallet already exists") + translationManager.emptyString;
-                        return false;
-                    }
+                if (
+                    walletLocation.text !== "" &&
+                    Wizard.walletPathExists(appWindow.accountsDir, walletLocation.text, walletName.text, isIOS, walletManager)
+                ) {
+                    return qsTr("Wallet already exists") + translationManager.emptyString;
                 }
-                errorMessageWalletName.text = "";
-                return true;
+
+                return "";
+            }
+
+            function verify() {
+                return !verifyWithMessage();
             }
 
             labelText: qsTr("Wallet name") + translationManager.emptyString
@@ -101,22 +98,19 @@ GridLayout {
             errorWhenEmpty: true
             text: defaultAccountName
 
-            onTextChanged: walletName.error = !walletName.verify();
-            Component.onCompleted: walletName.error = !walletName.verify();
-
             Accessible.role: Accessible.EditableText
             Accessible.name: labelText + text
             KeyNavigation.up: walletNameKeyNavigationBackTab
             KeyNavigation.backtab: walletNameKeyNavigationBackTab
-            KeyNavigation.down: errorMessageWalletName.text != "" ? errorMessageWalletName : appWindow.walletMode >= 2 ? walletLocation : wizardNav.btnPrev
-            KeyNavigation.tab: errorMessageWalletName.text != "" ? errorMessageWalletName : appWindow.walletMode >= 2 ? walletLocation : wizardNav.btnPrev
+            KeyNavigation.down: errorMessageWalletName.text !== "" ? errorMessageWalletName : (appWindow.walletMode >= 2 ? walletLocation : browseButtonKeyNavigationTab)
+            KeyNavigation.tab: errorMessageWalletName.text !== "" ? errorMessageWalletName : (appWindow.walletMode >= 2 ? walletLocation : browseButtonKeyNavigationTab)
         }
 
         RowLayout {
             Layout.preferredWidth: grid.width/5
 
             MoneroComponents.TextPlain {
-                visible: errorMessageWalletName.text != ""
+                visible: !walletName.verify()
                 font.family: FontAwesome.fontFamilySolid
                 font.styleName: "Solid"
                 font.pixelSize: 15
@@ -127,6 +121,7 @@ GridLayout {
 
             MoneroComponents.TextPlain {
                 id: errorMessageWalletName
+                text: walletName.verifyWithMessage()
                 textFormat: Text.PlainText
                 font.family: MoneroComponents.Style.fontRegular.name
                 font.pixelSize: 14
@@ -149,13 +144,16 @@ GridLayout {
             id: walletLocation
             Layout.preferredWidth: grid.width/3
 
-            function verify() {
-                if (walletLocation.text == "") {
-                    errorMessageWalletLocation.text = qsTr("Wallet location is empty") + translationManager.emptyString;
-                    return false;
+            function verifyWithMessage() {
+                if (walletLocation.text === "") {
+                    return qsTr("Wallet location is empty") + translationManager.emptyString;
                 }
-                errorMessageWalletLocation.text = "";
-                return true;
+
+                return "";
+            }
+
+            function verify() {
+                return !verifyWithMessage();
             }
 
             labelText: qsTr("Wallet location") + translationManager.emptyString
@@ -165,15 +163,10 @@ GridLayout {
             placeholderFontSize: 16
             errorWhenEmpty: true
             text: appWindow.accountsDir + "/"
-            onTextChanged: {
-                walletLocation.error = !walletLocation.verify();
-                walletName.error = !walletName.verify();
-            }
-            Component.onCompleted: walletLocation.error = !walletLocation.verify();
             Accessible.role: Accessible.EditableText
             Accessible.name: labelText + text
-            KeyNavigation.up: errorMessageWalletName.text != "" ? errorMessageWalletName : walletName
-            KeyNavigation.backtab: errorMessageWalletName.text != "" ? errorMessageWalletName : walletName
+            KeyNavigation.up: errorMessageWalletName.text !== "" ? errorMessageWalletName : walletName
+            KeyNavigation.backtab: errorMessageWalletName.text !== "" ? errorMessageWalletName : walletName
             KeyNavigation.down: browseButton
             KeyNavigation.tab: browseButton
 
@@ -194,8 +187,8 @@ GridLayout {
                 Accessible.name: qsTr("Browse") + translationManager.emptyString
                 KeyNavigation.up: walletLocation
                 KeyNavigation.backtab: walletLocation
-                KeyNavigation.down: errorMessageWalletLocation.text != "" ? errorMessageWalletLocation : browseButtonKeyNavigationTab
-                KeyNavigation.tab: errorMessageWalletLocation.text != "" ? errorMessageWalletLocation : browseButtonKeyNavigationTab
+                KeyNavigation.down: errorMessageWalletLocation.text !== "" ? errorMessageWalletLocation : browseButtonKeyNavigationTab
+                KeyNavigation.tab: errorMessageWalletLocation.text !== "" ? errorMessageWalletLocation : browseButtonKeyNavigationTab
             }
         }
 
@@ -203,7 +196,7 @@ GridLayout {
             Layout.preferredWidth: grid.width/3
 
             MoneroComponents.TextPlain {
-                visible: errorMessageWalletLocation.text != ""
+                visible: !walletLocation.verify()
                 font.family: FontAwesome.fontFamilySolid
                 font.styleName: "Solid"
                 font.pixelSize: 15
@@ -214,6 +207,7 @@ GridLayout {
 
             MoneroComponents.TextPlain {
                 id: errorMessageWalletLocation
+                text: walletLocation.verifyWithMessage()
                 textFormat: Text.PlainText
                 font.family: MoneroComponents.Style.fontRegular.name
                 font.pixelSize: 14
@@ -237,7 +231,6 @@ GridLayout {
         onAccepted: {
             walletLocation.text = walletManager.urlToLocalPath(fileWalletDialog.folder);
             fileWalletDialog.visible = false;
-            walletName.error = !walletName.verify();
         }
         onRejected: {
             fileWalletDialog.visible = false;
