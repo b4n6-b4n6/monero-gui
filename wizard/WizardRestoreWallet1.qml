@@ -41,38 +41,36 @@ Rectangle {
     property alias pageHeight: pageRoot.height
     property string viewName: "wizardRestoreWallet1"
 
+    function verifySeedInput() {
+        return seedInput.text && !Wizard.checkSeed(seedInput.text.trim());
+    }
+
     function verify() {
         if (restoreHeight.text.indexOf('-') === 4 && restoreHeight.text.length !== 10) {
             return false;
         }
 
-        var valid = false;
-        if(wizardController.walletRestoreMode === "keys") {
-            return wizardWalletInput.verify() && wizardRestoreWallet1.verifyFromKeys();
-        } else if(wizardController.walletRestoreMode === "seed") {
-            seedInput.error = seedInput.text && !Wizard.checkSeed(seedInput.text.trim());
+        if (wizardController.walletRestoreMode === "keys") {
+            return wizardWalletInput.verify() && wizardRestoreWallet1.verifyAllKeys();
+        } else if (wizardController.walletRestoreMode === "seed") {
             return wizardWalletInput.verify() && seedInput.text && Wizard.checkSeed(seedInput.text.trim());
         }
 
         return false;
     }
 
-    function verifyFromKeys() {
-        var result = Wizard.restoreWalletCheckViewSpendAddress(
+    function verifyKeys() {
+        return Wizard.restoreWalletCheckViewSpendAddress(
             walletManager,
             persistentSettings.nettype,
             viewKeyLine.text,
             spendKeyLine.text,
             addressLine.text
         );
+    }
 
-        var addressLineLength = addressLine.text.length
-        var viewKeyLineLength = viewKeyLine.text.length
-        var spendKeyLineLength = spendKeyLine.text.length
-
-        addressLine.error = !result[0] && addressLineLength != 0
-        viewKeyLine.error = !result[1] && viewKeyLineLength != 0
-        spendKeyLine.error = !result[2] && spendKeyLineLength != 0
+    function verifyAllKeys() {
+        var result = verifyKeys();
 
         // allow valid viewOnly
         if (spendKeyLine.text.length === 0)
@@ -173,10 +171,10 @@ Rectangle {
 
                     border.width: 1
                     border.color: {
-                        if(seedInput.text !== "" && seedInput.error){
-                            return MoneroComponents.Style.inputBorderColorInvalid;
-                        } else if(seedInput.activeFocus){
+                        if (seedInput.activeFocus) {
                             return MoneroComponents.Style.inputBorderColorActive;
+                        } else if (seedInput.text !== "" && verifySeedInput()) {
+                            return MoneroComponents.Style.inputBorderColorInvalid;
                         } else {
                             return MoneroComponents.Style.inputBorderColorInActive;
                         }
@@ -184,7 +182,7 @@ Rectangle {
 
                     MoneroComponents.InputMulti {
                         id: seedInput
-                        property bool error: false
+                        error: verifySeedInput()
                         width: parent.width
                         height: 100
 
@@ -233,37 +231,28 @@ Rectangle {
             MoneroComponents.LineEdit {
                 id: addressLine
                 visible: wizardController.walletRestoreMode === 'keys'
+                error: !verifyKeys()[0] && addressLine.text !== ""
                 Layout.fillWidth: true
                 placeholderFontSize: 16
                 placeholderText: qsTr("Account address (public)") + translationManager.emptyString
-
-                onTextUpdated: {
-                    wizardRestoreWallet1.verifyFromKeys();
-                }
             }
 
             MoneroComponents.LineEdit {
                 id: viewKeyLine
                 visible: wizardController.walletRestoreMode === 'keys'
+                error: !verifyKeys()[1] && viewKeyLine.text !== ""
                 Layout.fillWidth: true
                 placeholderFontSize: 16
                 placeholderText: qsTr("View key (private)") + translationManager.emptyString
-
-                onTextUpdated: {
-                    wizardRestoreWallet1.verifyFromKeys();
-                }
             }
 
             MoneroComponents.LineEdit {
                 id: spendKeyLine
                 visible: wizardController.walletRestoreMode === 'keys'
+                error: !verifyKeys()[2] && spendKeyLine.text !== ""
                 Layout.fillWidth: true
                 placeholderFontSize: 16
                 placeholderText: qsTr("Spend key (private)") + " / " + qsTr("Leave blank to create a view-only wallet") + translationManager.emptyString
-
-                onTextUpdated: {
-                    wizardRestoreWallet1.verifyFromKeys();
-                }
             }
 
             GridLayout{

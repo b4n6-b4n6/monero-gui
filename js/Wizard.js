@@ -119,14 +119,11 @@ function checkSeed(seed) {
 }
 
 function restoreWalletCheckViewSpendAddress(walletmanager, nettype, viewkey, spendkey, addressline){
-    var results = [];
-    // addressOK
-    results[0] = walletmanager.addressValid(addressline, nettype);
-    // viewKeyOK
-    results[1] = walletmanager.keyValid(viewkey, addressline, true, nettype);
-    // spendKeyOK, Spendkey is optional
-    results[2] = walletmanager.keyValid(spendkey, addressline, false, nettype);
-    return results;
+    return [
+        walletmanager.addressValid(addressline, nettype),
+        walletmanager.keyValid(viewkey, addressline, true, nettype),
+        walletmanager.keyValid(spendkey, addressline, false, nettype) // Spendkey is optional
+    ];
 }
 
 //usage: getApproximateBlockchainHeight("March 18 2016") or getApproximateBlockchainHeight("2016-11-11")
