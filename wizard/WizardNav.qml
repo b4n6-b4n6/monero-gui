@@ -71,7 +71,11 @@ RowLayout {
 
         MoneroComponents.StandardButton {
             id: btnPrev
-            width: appWindow.width <= 506 ? 45 : appWindow.width <= 660 ? 120 : 180
+            width: (
+                (appWindow.width <= 506 && 45) ||
+                (appWindow.width <= 660 && 120) ||
+                180
+            )
             small: true
             primary: false
             text: appWindow.width <= 506 ? "<" : menuNav.btnPrevText
@@ -88,12 +92,17 @@ RowLayout {
             Accessible.name: text
             KeyNavigation.up: btnPrevKeyNavigationBackTab
             KeyNavigation.backtab: btnPrevKeyNavigationBackTab
-            KeyNavigation.down: wizardProgress.visible ? wizardProgress
-                                                       : btnNext.visible && btnNext.enabled ? btnNext
-                                                                                            : btnNextKeyNavigationTab
-            KeyNavigation.tab: wizardProgress.visible ? wizardProgress
-                                                      : btnNext.visible && btnNext.enabled ? btnNext
-                                                                                           : btnNextKeyNavigationTab
+
+            function nextFocusable() {
+                return (
+                    (wizardProgress.visible && wizardProgress) ||
+                    ((btnNext.visible && btnNext.enabled) && btnNext) ||
+                    btnNextKeyNavigationTab
+                )
+            }
+
+            KeyNavigation.down: nextFocusable()
+            KeyNavigation.tab: nextFocusable()
         }
     }
 
@@ -137,7 +146,11 @@ RowLayout {
 
         MoneroComponents.StandardButton {
             id: btnNext
-            width: appWindow.width <= 506 ? 45 : appWindow.width <= 660 ? 120 : 180
+            width: (
+                (appWindow.width <= 506 && 45) ||
+                (appWindow.width <= 660 && 120) ||
+                180
+            )
             small: true
             text: appWindow.width <= 506 ? ">" : menuNav.btnNextText
 

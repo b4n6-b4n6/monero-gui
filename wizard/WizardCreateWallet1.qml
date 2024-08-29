@@ -63,12 +63,17 @@ Rectangle {
 
             WizardHeader {
                 id: createWalletHeader
-                title: {
+
+                function netTypeString() {
                     var nettype = persistentSettings.nettype;
-                    return qsTr("Create a new wallet") + (nettype === 2 ? " (" + qsTr("stagenet") + ")"
-                                                                        : nettype === 1 ? " (" + qsTr("testnet") + ")"
-                                                                                        : "") + translationManager.emptyString
+                    return (
+                        (nettype === 2 && " (" + qsTr("stagenet") + ")") ||
+                        (nettype === 1 && " (" + qsTr("testnet") + ")") ||
+                        ""
+                    )
                 }
+
+                title: qsTr("Create a new wallet") + netTypeString() + translationManager.emptyString
                 subtitle: qsTr("Creates a new wallet on this computer.") + translationManager.emptyString
                 Accessible.role: Accessible.StaticText
                 Accessible.name: title + subtitle
@@ -99,7 +104,7 @@ Rectangle {
                     wizardController.wizardStateView.wizardCreateWallet3View.pwConfirmField = "";
                     wizardStateView.state = "wizardHome";
                 }
-                btnPrevKeyNavigationBackTab: walletInput.errorMessageWalletLocation.text != "" ? walletInput.errorMessageWalletLocation : walletInput.browseButton
+                btnPrevKeyNavigationBackTab: walletInput.errorMessageWalletLocation.text !== "" ? walletInput.errorMessageWalletLocation : walletInput.browseButton
                 btnNextKeyNavigationTab: createWalletHeader
                 onNextClicked: {
                     wizardController.walletOptionsName = walletInput.walletName.text;
